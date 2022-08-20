@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/sho-hata/decimalnonassign"
-	"golang.org/x/tools/go/analysis/unitchecker"
+	"golang.org/x/tools/go/analysis/singlechecker"
 )
 
-func main() { unitchecker.Main(decimalnonassign.Analyzer) }
+func main() { singlechecker.Main(decimalnonassign.Analyzer) }
