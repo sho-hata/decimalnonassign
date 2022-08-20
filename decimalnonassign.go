@@ -65,15 +65,15 @@ func run(pass *analysis.Pass) (any, error) {
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		if n, ok := n.(*ast.FuncDecl); ok {
-			report(pass, n.Body)
+			report(pass, n.Body.List)
 		}
 	})
 
 	return nil, nil
 }
 
-func report(pass *analysis.Pass, n *ast.BlockStmt) {
-	for _, s := range n.List {
+func report(pass *analysis.Pass, ss []ast.Stmt) {
+	for _, s := range ss {
 		switch s := s.(type) {
 		case *ast.ExprStmt:
 			if ex, ok := s.X.(*ast.CallExpr); ok {
@@ -84,18 +84,22 @@ func report(pass *analysis.Pass, n *ast.BlockStmt) {
 				}
 			}
 		case *ast.ForStmt:
-			report(pass, s.Body)
+			report(pass, s.Body.List)
 		case *ast.RangeStmt:
-			report(pass, s.Body)
+			report(pass, s.Body.List)
 		case *ast.IfStmt:
-			report(pass, s.Body)
+			report(pass, s.Body.List)
 
 			switch s := s.Else.(type) {
 			case *ast.BlockStmt:
-				report(pass, s)
+				report(pass, s.List)
 			case *ast.IfStmt:
-				report(pass, s.Body)
+				report(pass, s.Body.List)
 			}
+		case *ast.SwitchStmt:
+			report(pass, s.Body.List)
+		case *ast.CaseClause:
+			report(pass, s.Body)
 		}
 	}
 }
