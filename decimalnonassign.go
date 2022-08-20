@@ -83,6 +83,8 @@ func report(pass *analysis.Pass, n *ast.BlockStmt) {
 					}
 				}
 			}
+		case *ast.ForStmt:
+			report(pass, s.Body)
 		case *ast.RangeStmt:
 			report(pass, s.Body)
 		case *ast.IfStmt:

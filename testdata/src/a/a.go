@@ -16,6 +16,15 @@ func calledDecimalMethodSimple() {
 	fmt.Print(result)
 }
 
+func calledDecimalMethodInFor() {
+	result := decimal.Zero
+
+	for {
+		result = result.Add(decimal.Zero)
+		result.Add(decimal.Zero) // want "result is not assigned"
+	}
+}
+
 func calledDecimalMethodInRange() {
 	ds := []decimal.Decimal{decimal.Zero, decimal.Zero, decimal.Zero}
 
