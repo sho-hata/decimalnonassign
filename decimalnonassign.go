@@ -104,6 +104,10 @@ func report(pass *analysis.Pass, ss []ast.Stmt) {
 			if f, ok := s.Call.Fun.(*ast.FuncLit); ok {
 				report(pass, f.Body.List)
 			}
+		case *ast.GoStmt:
+			if f, ok := s.Call.Fun.(*ast.FuncLit); ok {
+				report(pass, f.Body.List)
+			}
 		}
 	}
 }

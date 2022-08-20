@@ -80,3 +80,12 @@ func calledDecimalMethodInDefer() {
 		result.Add(decimal.Zero) // want "result is not assigned"
 	}()
 }
+
+func calledDecimalMethodInGo() {
+	result := decimal.Zero
+
+	go func() {
+		result = result.Add(decimal.Zero)
+		result.Add(decimal.Zero) // want "result is not assigned"
+	}()
+}
