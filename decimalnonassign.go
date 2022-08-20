@@ -3,7 +3,6 @@ package decimalnonassign
 import (
 	"errors"
 	"go/ast"
-	"go/token"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -78,8 +77,12 @@ func report(pass *analysis.Pass, ss []ast.Stmt) {
 		case *ast.ExprStmt:
 			if ex, ok := s.X.(*ast.CallExpr); ok {
 				if s, ok := ex.Fun.(*ast.SelectorExpr); ok {
-					if ok, pos := findDecimalMethodPos(pass, s); ok {
-						pass.Reportf(pos, "result is not assigned")
+					if i, ok := s.X.(*ast.Ident); ok {
+						if strings.HasSuffix(pass.TypesInfo.TypeOf(i).String(), targetType) {
+							if _, ok := decimalMethodNames[s.Sel.Name]; ok {
+								pass.Reportf(i.Pos(), "The result of '%s' is not assigned", s.Sel.Name)
+							}
+						}
 					}
 				}
 			}
@@ -114,16 +117,4 @@ func report(pass *analysis.Pass, ss []ast.Stmt) {
 			report(pass, s.Body)
 		}
 	}
-}
-
-func findDecimalMethodPos(pass *analysis.Pass, e *ast.SelectorExpr) (bool, token.Pos) {
-	if i, ok := e.X.(*ast.Ident); ok {
-		if strings.HasSuffix(pass.TypesInfo.TypeOf(i).String(), targetType) {
-			if _, ok := decimalMethodNames[e.Sel.Name]; ok {
-				return true, i.Pos()
-			}
-		}
-	}
-
-	return false, token.NoPos
 }

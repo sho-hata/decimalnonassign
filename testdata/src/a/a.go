@@ -9,9 +9,9 @@ import (
 
 func calledDecimalMethodSimple() {
 	d := decimal.Zero
-	d.Add(d) // want "result is not assigned"
-	d.Sub(d) // want "result is not assigned"
-	d.Div(d) // want "result is not assigned"
+	d.Add(d) // want "The result of 'Add' is not assigned"
+	d.Sub(d) // want "The result of 'Sub' is not assigned"
+	d.Div(d) // want "The result of 'Div' is not assigned"
 	result := d.Add(decimal.Zero)
 	fmt.Println(d.Add(decimal.Zero))
 	fmt.Print(result)
@@ -22,7 +22,7 @@ func calledDecimalMethodInFor() {
 
 	for {
 		result = result.Add(decimal.Zero)
-		result.Add(decimal.Zero) // want "result is not assigned"
+		result.Add(decimal.Zero) // want "The result of 'Add' is not assigned"
 	}
 }
 
@@ -32,7 +32,7 @@ func calledDecimalMethodInRange() {
 	result := decimal.Zero
 	for _, d := range ds {
 		result = result.Add(d)
-		result.Add(d) // want "result is not assigned"
+		result.Add(d) // want "The result of 'Add' is not assigned"
 	}
 }
 
@@ -44,12 +44,12 @@ func calledDecimalMethodInIf() {
 	if true {
 		for _, d := range ds {
 			result = result.Add(d)
-			result.Add(d) // want "result is not assigned"
+			result.Add(d) // want "The result of 'Add' is not assigned"
 		}
 	} else {
 		for _, d := range ds {
 			result = result.Sub(d)
-			result.Sub(d) // want "result is not assigned"
+			result.Sub(d) // want "The result of 'Sub' is not assigned"
 		}
 	}
 }
@@ -60,16 +60,16 @@ func calledDecimalMethodInSwitch() {
 	switch n {
 	case 1:
 		result = result.Add(decimal.Zero)
-		result.Add(decimal.Zero) // want "result is not assigned"
+		result.Add(decimal.Zero) // want "The result of 'Add' is not assigned"
 	case 2:
 		result = result.Sub(decimal.Zero)
-		result.Sub(decimal.Zero) // want "result is not assigned"
+		result.Sub(decimal.Zero) // want "The result of 'Sub' is not assigned"
 	case 3:
 		result = result.Div(decimal.Zero)
-		result.Div(decimal.Zero) // want "result is not assigned"
+		result.Div(decimal.Zero) // want "The result of 'Div' is not assigned"
 	default:
 		result = result.Mul(decimal.Zero)
-		result.Mul(decimal.Zero) // want "result is not assigned"
+		result.Mul(decimal.Zero) // want "The result of 'Mul' is not assigned"
 	}
 }
 
@@ -78,7 +78,7 @@ func calledDecimalMethodInDefer() {
 
 	defer func() {
 		result = result.Add(decimal.Zero)
-		result.Add(decimal.Zero) // want "result is not assigned"
+		result.Add(decimal.Zero) // want "The result of 'Add' is not assigned"
 	}()
 }
 
@@ -87,7 +87,7 @@ func calledDecimalMethodInGo() {
 
 	go func() {
 		result = result.Add(decimal.Zero)
-		result.Add(decimal.Zero) // want "result is not assigned"
+		result.Add(decimal.Zero) // want "The result of 'Add' is not assigned"
 	}()
 }
 
@@ -110,10 +110,10 @@ func calledDecimalMethodInSelect() {
 		select {
 		case v := <-c1:
 			result = result.Add(v)
-			result.Add(v) // want "result is not assigned"
+			result.Add(v) // want "The result of 'Add' is not assigned"
 		case v := <-c2:
 			result = result.Add(v)
-			result.Add(v) // want "result is not assigned"
+			result.Add(v) // want "The result of 'Add' is not assigned"
 		}
 	}
 
