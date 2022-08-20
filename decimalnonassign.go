@@ -1,7 +1,9 @@
 package decimalnonassign
 
 import (
+	"errors"
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"golang.org/x/tools/go/analysis"
@@ -9,9 +11,11 @@ import (
 	"golang.org/x/tools/go/ast/inspector"
 )
 
-const doc = "decimalnonassign is ..."
+const (
+	doc        = "decimalnonassign is Go linter that checks if the result of a decimal operation is assigned"
+	targetType = "github.com/shopspring/decimal.Decimal"
+)
 
-// Analyzer is ...
 var Analyzer = &analysis.Analyzer{
 	Name: "decimalnonassign",
 	Doc:  doc,
@@ -21,62 +25,87 @@ var Analyzer = &analysis.Analyzer{
 	},
 }
 
+// List of methods that return decimal.Decimal
+// ref: https://pkg.go.dev/github.com/shopspring/decimal#pkg-types
+var decimalMethodNames = map[string]bool{
+	"Abs":        true,
+	"Add":        true,
+	"Atan":       true,
+	"Ceil":       true,
+	"Copy":       true,
+	"Cos":        true,
+	"Div":        true,
+	"DivRound":   true,
+	"Floor":      true,
+	"Mod":        true,
+	"Mul":        true,
+	"Neg":        true,
+	"Pow":        true,
+	"Round":      true,
+	"RoundBank":  true,
+	"RoundCash":  true,
+	"RoundCeil":  true,
+	"RoundDown":  true,
+	"RoundFloor": true,
+	"RoundUp":    true,
+	"Shift":      true,
+	"Sin":        true,
+	"Sub":        true,
+	"Tan":        true,
+	"Truncate":   true,
+}
+
 func run(pass *analysis.Pass) (any, error) {
-	inspect := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
-
-	nodeFilter := []ast.Node{
-		(*ast.FuncDecl)(nil),
+	inspect, ok := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	if !ok {
+		return nil, errors.New("file inspection failed")
 	}
 
-	// List of methods that return decimal.Decimal
-	// ref: https://pkg.go.dev/github.com/shopspring/decimal#pkg-types
-	var decimalMethodNames = map[string]bool{
-		"Abs":        true,
-		"Add":        true,
-		"Atan":       true,
-		"Ceil":       true,
-		"Copy":       true,
-		"Cos":        true,
-		"Div":        true,
-		"DivRound":   true,
-		"Floor":      true,
-		"Mod":        true,
-		"Mul":        true,
-		"Neg":        true,
-		"Pow":        true,
-		"Round":      true,
-		"RoundBank":  true,
-		"RoundCash":  true,
-		"RoundCeil":  true,
-		"RoundDown":  true,
-		"RoundFloor": true,
-		"RoundUp":    true,
-		"Shift":      true,
-		"Sin":        true,
-		"Sub":        true,
-		"Tan":        true,
-		"Truncate":   true,
-	}
+	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
 		if n, ok := n.(*ast.FuncDecl); ok {
-			for _, s := range n.Body.List {
-				if s, ok := s.(*ast.ExprStmt); ok {
-					if ex, ok := s.X.(*ast.CallExpr); ok {
-						if s, ok := ex.Fun.(*ast.SelectorExpr); ok {
-							if i, ok := s.X.(*ast.Ident); ok {
-								if strings.HasSuffix(pass.TypesInfo.TypeOf(i).String(), "github.com/shopspring/decimal.Decimal") {
-									if _, ok := decimalMethodNames[s.Sel.Name]; ok {
-										pass.Reportf(i.Pos(), "result is not assigned")
-									}
-								}
-							}
-						}
-					}
-				}
-			}
+			report(pass, n.Body)
 		}
 	})
 
 	return nil, nil
+}
+
+func report(pass *analysis.Pass, n *ast.BlockStmt) {
+	for _, s := range n.List {
+		switch s := s.(type) {
+		case *ast.ExprStmt:
+			if ex, ok := s.X.(*ast.CallExpr); ok {
+				if s, ok := ex.Fun.(*ast.SelectorExpr); ok {
+					if ok, pos := findDecimalMethodPos(pass, s); ok {
+						pass.Reportf(pos, "result is not assigned")
+					}
+				}
+			}
+		case *ast.RangeStmt:
+			report(pass, s.Body)
+		case *ast.IfStmt:
+			report(pass, s.Body)
+
+			switch s := s.Else.(type) {
+			case *ast.BlockStmt:
+				report(pass, s)
+			case *ast.IfStmt:
+				report(pass, s.Body)
+			}
+		}
+	}
+}
+
+func findDecimalMethodPos(pass *analysis.Pass, e *ast.SelectorExpr) (bool, token.Pos) {
+	if i, ok := e.X.(*ast.Ident); ok {
+		if strings.HasSuffix(pass.TypesInfo.TypeOf(i).String(), targetType) {
+			if _, ok := decimalMethodNames[e.Sel.Name]; ok {
+				return true, i.Pos()
+			}
+		}
+	}
+
+	return false, token.NoPos
 }
