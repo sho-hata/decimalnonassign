@@ -55,7 +55,7 @@ var decimalMethodNames = map[string]bool{
 	"Truncate":   true,
 }
 
-func run(pass *analysis.Pass) (any, error) {
+func run(pass *analysis.Pass) (interface{}, error) {
 	inspect, ok := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
 	if !ok {
 		return nil, errors.New("file inspection failed")
@@ -108,6 +108,10 @@ func report(pass *analysis.Pass, ss []ast.Stmt) {
 			if f, ok := s.Call.Fun.(*ast.FuncLit); ok {
 				report(pass, f.Body.List)
 			}
+		case *ast.SelectStmt:
+			report(pass, s.Body.List)
+		case *ast.CommClause:
+			report(pass, s.Body)
 		}
 	}
 }

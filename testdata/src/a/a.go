@@ -2,6 +2,7 @@ package a
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/shopspring/decimal"
 )
@@ -88,4 +89,33 @@ func calledDecimalMethodInGo() {
 		result = result.Add(decimal.Zero)
 		result.Add(decimal.Zero) // want "result is not assigned"
 	}()
+}
+
+func calledDecimalMethodInSelect() {
+	c1 := make(chan decimal.Decimal)
+	c2 := make(chan decimal.Decimal)
+
+	go func() {
+		time.Sleep(1 * time.Second)
+		c1 <- decimal.NewFromFloat(1)
+	}()
+	go func() {
+		time.Sleep(1 * time.Second)
+		c2 <- decimal.NewFromFloat(2)
+	}()
+
+	result := decimal.Zero
+
+	for i := 0; i < 2; i++ {
+		select {
+		case v := <-c1:
+			result = result.Add(v)
+			result.Add(v) // want "result is not assigned"
+		case v := <-c2:
+			result = result.Add(v)
+			result.Add(v) // want "result is not assigned"
+		}
+	}
+
+	fmt.Println(result.String()) // 3
 }
