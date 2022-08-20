@@ -71,3 +71,12 @@ func calledDecimalMethodInSwitch() {
 		result.Mul(decimal.Zero) // want "result is not assigned"
 	}
 }
+
+func calledDecimalMethodInDefer() {
+	result := decimal.Zero
+
+	defer func() {
+		result = result.Add(decimal.Zero)
+		result.Add(decimal.Zero) // want "result is not assigned"
+	}()
+}

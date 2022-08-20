@@ -100,6 +100,10 @@ func report(pass *analysis.Pass, ss []ast.Stmt) {
 			report(pass, s.Body.List)
 		case *ast.CaseClause:
 			report(pass, s.Body)
+		case *ast.DeferStmt:
+			if f, ok := s.Call.Fun.(*ast.FuncLit); ok {
+				report(pass, f.Body.List)
+			}
 		}
 	}
 }
