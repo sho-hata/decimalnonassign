@@ -2,6 +2,7 @@ package decimalnonassign
 
 import (
 	"errors"
+	"fmt"
 	"go/ast"
 	"strings"
 
@@ -11,8 +12,9 @@ import (
 )
 
 const (
-	doc        = "decimalnonassign is Go linter that checks if the result of a decimal operation is assigned"
-	targetType = "github.com/shopspring/decimal.Decimal"
+	doc           = "decimalnonassign is Go linter that checks if the result of a decimal operation is assigned"
+	targetPackage = "github.com/shopspring/decimal"
+	targetType    = targetPackage + ".Decimal"
 )
 
 var Analyzer = &analysis.Analyzer{
@@ -60,11 +62,26 @@ func run(pass *analysis.Pass) (interface{}, error) {
 		return nil, errors.New("file inspection failed")
 	}
 
-	nodeFilter := []ast.Node{(*ast.FuncDecl)(nil)}
+	nodeFilter := []ast.Node{(*ast.File)(nil)}
 
 	inspect.Preorder(nodeFilter, func(n ast.Node) {
-		if n, ok := n.(*ast.FuncDecl); ok {
-			report(pass, n.Body.List)
+		if n, ok := n.(*ast.File); ok {
+			var targetImported bool
+			for _, i := range n.Imports {
+				if i.Path.Value == fmt.Sprintf("\"%s\"", targetPackage) {
+					targetImported = true
+				}
+			}
+
+			if !targetImported {
+				return
+			}
+
+			for _, decl := range n.Decls {
+				if fnDecl, ok := decl.(*ast.FuncDecl); ok {
+					report(pass, fnDecl.Body.List)
+				}
+			}
 		}
 	})
 
