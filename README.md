@@ -53,7 +53,7 @@ go install github.com/sho-hata/decimalnonassign/cmd/decimalnonassign@latest
 7. Create new Pull Request
 
 ## License
-[MIT](https://github.com/sho-hata/tparagen/blob/main/LICENSE)
+[MIT](https://github.com/sho-hata/decimalnonassign/blob/main/LICENSE)
 
 ## Author
 [sho-hata](https://github.com/sho-hata)
