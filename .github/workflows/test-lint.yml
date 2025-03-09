@@ -3,30 +3,25 @@ name: test-lint
 on: [push, pull_request]
 
 jobs:
-  setup:
+  build-test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version:
+          - "1.19"
+          - "1.20"
+          - "1.22"
+          - "1.23"
+          - "1.24"
     steps:
-      - name: set up
+      - name: set up go ${{ matrix.go-version }}
         uses: actions/setup-go@v5
         with:
-          go-version: ^1.19
-        id: go
+          go-version: ${{ matrix.go-version }}
       - name: check out
         uses: actions/checkout@v4
-
-  build:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: build
         run: go build ./...
-
-  test:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
       - name: test
         run: go test ./... -v
 
